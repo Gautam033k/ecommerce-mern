@@ -1,8 +1,10 @@
 import './App.css';
-import { HomeScreen } from './Screen/HomeScreen';
+// import { HomeScreen } from './Screen/HomeScreen';
+// import { ProductScreen } from './Screen/ProductScreen';
+import SingleProduct from './Screen/SingleProduct';
 
 function App() {
-  return <HomeScreen />;
+  return <SingleProduct />;
 }
 
 export default App;
