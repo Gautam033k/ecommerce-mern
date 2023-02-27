@@ -239,7 +239,6 @@ const CartScreen = () => {
               <SummaryItemPrice>₹{cart.total - 40}</SummaryItemPrice>
             </SummaryItem>
             <Button onClick={checkoutHandler}>CHECKOUT NOW</Button>
-            <CheckoutButton cartItems={cart.total} />
           </Summary>
         </Bottom>
       </Wrapper>
