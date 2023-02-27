@@ -1,10 +1,19 @@
 import AddCircleOutlinedIcon from '@mui/icons-material/AddCircleOutlined';
 import RemoveCircleOutlinedIcon from '@mui/icons-material/RemoveCircleOutlined';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { useSelector } from 'react-redux';
 import styled from 'styled-components';
 import Announcement from '../components/Announcement';
+// import CheckoutButton from '../components/CheckoutButton';
 import Footer from '../components/Footer';
 import NavBar from '../components/NavBar';
+// import StripeCheckout from 'react-stripe-checkout';
+import { userRequest } from '../requestMethods';
+import { useNavigate } from 'react-router';
+import CheckoutButton from '../components/CheckoutButton';
+
+const KEY =
+  'pk_test_51MBbc3SHKPdsKlsu8sonQqgPt17TfFB3yJfhq66yW5bKoyCtoo0Zpp1ffJ7o260H0Pk4T8DlDdXxt60UdI66IpOc00ROac7iI0';
 
 const Container = styled.div``;
 
@@ -132,6 +141,36 @@ const Button = styled.button`
 `;
 
 const CartScreen = () => {
+  const cart = useSelector((state) => state.cart);
+  const [stripeToken, setStripeToken] = useState(null);
+  const history = useNavigate();
+  // console.log(cart);
+  console.log(stripeToken);
+
+  const onToken = (token) => {
+    setStripeToken(token);
+  };
+  useEffect(() => {
+    const makeRequest = async () => {
+      try {
+        const res = await userRequest.post('/checkout/payments', {
+          tokenId: stripeToken.id,
+          amount: 500,
+        });
+        history.push('/success', { data: res.data });
+      } catch (err) {
+        console.log(err);
+      }
+    };
+    stripeToken && makeRequest(); //cart.total >= 1 &&
+  }, [stripeToken, cart.total, history]);
+
+  const navigate = useNavigate();
+
+  const checkoutHandler = () => {
+    navigate('/login?redirect=/shipping');
+  };
+
   return (
     <Container>
       <Announcement />
@@ -149,65 +188,43 @@ const CartScreen = () => {
         </Top>
         <Bottom>
           <Info>
-            <Product>
-              <ProductDetail>
-                <Image src="https://hips.hearstapps.com/vader-prod.s3.amazonaws.com/1614188818-TD1MTHU_SHOE_ANGLE_GLOBAL_MENS_TREE_DASHERS_THUNDER_b01b1013-cd8d-48e7-bed9-52db26515dc4.png?crop=1xw:1.00xh;center,top&resize=480%3A%2A" />
-                <Details>
-                  <ProductName>
-                    <b>PRODUCT:</b>JESSIE THUNDER SHOES
-                  </ProductName>
-                  <ProductId>
-                    <b>PRODUCTID:</b>623ew322c23234e3qs
-                  </ProductId>
-                  <ProductColor color="black" />
-                  <ProductSize>
-                    <b>SIZE:</b>37.5
-                  </ProductSize>
-                </Details>
-              </ProductDetail>
+            {cart.products.map((product) => (
+              <Product>
+                <ProductDetail>
+                  <Image src={product.image} />
+                  <Details>
+                    <ProductName>
+                      <b>PRODUCT:</b>
+                      {product.title}
+                    </ProductName>
+                    <ProductId>
+                      <b>PRODUCTID:</b>
+                      {product._id}
+                    </ProductId>
+                    <ProductColor color={product.color} />
+                    <ProductSize>
+                      <b>SIZE:</b>
+                      {product.size}
+                    </ProductSize>
+                  </Details>
+                </ProductDetail>
 
-              <PriceDetail>
-                <ProductAmountContainer>
-                  <AddCircleOutlinedIcon />
-                  <ProductAmount>2</ProductAmount>
-                  <RemoveCircleOutlinedIcon />
-                </ProductAmountContainer>
-                <ProductPrice>₹900</ProductPrice>
-              </PriceDetail>
-            </Product>
-            <Hr />
-            <Product>
-              <ProductDetail>
-                <Image src="https://i.pinimg.com/originals/2d/af/f8/2daff8e0823e51dd752704a47d5b795c.png" />
-                <Details>
-                  <ProductName>
-                    <b>PRODUCT:</b>NIKE TSHIRT
-                  </ProductName>
-                  <ProductId>
-                    <b>PRODUCTID:</b>623ew322c23234e3g5
-                  </ProductId>
-                  <ProductColor color="grey" />
-                  <ProductSize>
-                    <b>SIZE:</b>M
-                  </ProductSize>
-                </Details>
-              </ProductDetail>
-
-              <PriceDetail>
-                <ProductAmountContainer>
-                  <AddCircleOutlinedIcon />
-                  <ProductAmount>2</ProductAmount>
-                  <RemoveCircleOutlinedIcon />
-                </ProductAmountContainer>
-                <ProductPrice>₹1900</ProductPrice>
-              </PriceDetail>
-            </Product>
+                <PriceDetail>
+                  <ProductAmountContainer>
+                    <AddCircleOutlinedIcon />
+                    <ProductAmount>{product.quantity}</ProductAmount>
+                    <RemoveCircleOutlinedIcon />
+                  </ProductAmountContainer>
+                  <ProductPrice>₹{product.price}</ProductPrice>
+                </PriceDetail>
+              </Product>
+            ))}
           </Info>
           <Summary>
             <SummaryTitle>ORDER SUMMARY</SummaryTitle>
             <SummaryItem>
               <SummaryItemText>Subtotal</SummaryItemText>
-              <SummaryItemPrice>₹2600</SummaryItemPrice>
+              <SummaryItemPrice>₹{cart.total}</SummaryItemPrice>
             </SummaryItem>
             <SummaryItem>
               <SummaryItemText>Estimated Shipping</SummaryItemText>
@@ -215,13 +232,14 @@ const CartScreen = () => {
             </SummaryItem>
             <SummaryItem>
               <SummaryItemText>Shipping Discount</SummaryItemText>
-              <SummaryItemPrice>₹40</SummaryItemPrice>
+              <SummaryItemPrice>-₹40</SummaryItemPrice>
             </SummaryItem>
             <SummaryItem type="total">
               <SummaryItemText>total</SummaryItemText>
-              <SummaryItemPrice>₹2600</SummaryItemPrice>
+              <SummaryItemPrice>₹{cart.total - 40}</SummaryItemPrice>
             </SummaryItem>
-            <Button>CHECKOUT NOW</Button>
+            <Button onClick={checkoutHandler}>CHECKOUT NOW</Button>
+            <CheckoutButton cartItems={cart.total} />
           </Summary>
         </Bottom>
       </Wrapper>
@@ -232,3 +250,17 @@ const CartScreen = () => {
 };
 
 export default CartScreen;
+
+// {
+//   /* <StripeCheckout
+//               name="Vormir"
+//               image="https://avatars.githubusercontent.com/u/1486366?v=4"
+//               billingAddress
+//               shippingAddress
+//               description={`your total is ₹${cart.total - 40} `}
+//               amount={cart.total * 100}
+//               token={onToken}
+//               stripeKey={KEY}
+//             >
+//                         </StripeCheckout> */
+// }

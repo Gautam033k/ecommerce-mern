@@ -1,5 +1,12 @@
 import React from 'react';
 import styled from 'styled-components';
+import { mobile } from '../responsive';
+import { useDispatch, useSelector } from 'react-redux';
+import { Link, useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
+import { useState } from 'react';
+import { useEffect } from 'react';
+import { register } from '../redux/userRedux';
 
 const Container = styled.div`
   width: 100vw;
@@ -20,6 +27,7 @@ const Wrapper = styled.div`
   width: 40%;
   padding: 20px;
   background-color: white;
+  ${mobile({ width: '75%' })}
 `;
 
 const Title = styled.h1`
@@ -52,24 +60,109 @@ const Button = styled.button`
   cursor: pointer;
 `;
 
+const initialState = {
+  firstName: '',
+  lastName: '',
+  email: '',
+  password: '',
+  confirmPassword: '',
+};
+
 const RegisterScreen = () => {
+  const [formValue, setFormValue] = useState(initialState);
+  const { error } = useSelector((state) => state.user);
+
+  const { email, password, firstName, lastName, confirmPassword } = formValue;
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    error && toast.error(error);
+  }, [error]);
+
+  const handleClick = (e) => {
+    e.preventDefault();
+
+    if (password !== confirmPassword)
+      return toast.error('Password should match');
+    if (email && password && firstName && lastName && confirmPassword) {
+      dispatch(register({ formValue, navigate, toast }));
+    }
+  };
+
+  const onInputChange = (e) => {
+    let { name, value } = e.target;
+    setFormValue({ ...formValue, [name]: value });
+  };
   return (
     <Container>
       <Wrapper>
         <Title>CREATE AN ACCOUNT</Title>
 
         <Form>
-          <Input placeholder="name" />
-          <Input placeholder="lastName" />
-          <Input placeholder="userName" />
-          <Input placeholder="email" />
-          <Input placeholder="password" />
-          <Input placeholder="confirmPassword" />
+          <Input
+            placeholder="firstName"
+            label="firstName"
+            type="text"
+            value={firstName}
+            name="firstName"
+            onChange={onInputChange}
+            required
+            invalid
+            validation="Provide your firstName"
+          />
+          <Input
+            placeholder="lastName"
+            label="lastName"
+            type="text"
+            value={lastName}
+            name="lastName"
+            onChange={onInputChange}
+            required
+            invalid
+            validation="Provide your lastName"
+          />
+          <Input
+            placeholder="email"
+            label="email"
+            type="text"
+            value={email}
+            name="email"
+            onChange={onInputChange}
+            required
+            invalid
+            validation="Provide your email"
+          />
+          <Input
+            placeholder="password"
+            label="password"
+            type="password"
+            value={password}
+            name="password"
+            onChange={onInputChange}
+            required
+            invalid
+            validation="Provide your password"
+          />
+          <Input
+            placeholder="confirmPassword"
+            label="confirmPassword"
+            type="password"
+            value={confirmPassword}
+            name="confirmPassword"
+            onChange={onInputChange}
+            required
+            invalid
+            validation="Provide your confirmPassword"
+          />
           <Aggrement>
             By creating an account, I consent to the processing of my personal
             data in accordance with the <b>PRIVACY POLICY</b>
           </Aggrement>
-          <Button>CREATE BUTTON</Button>
+          <Button onClick={handleClick}>CREATE BUTTON</Button>
+          <Link to="/login">
+            <p>Already have an Account? Login</p>
+          </Link>
         </Form>
       </Wrapper>
     </Container>
